@@ -64,3 +64,13 @@ instance Show Value where
 
 putValue :: Value -> IO ()
 putValue = print
+
+type JSONError = String
+
+class JSON a where
+    toJson :: a -> Value
+    fromJson :: Value -> Either JSONError a
+
+instance JSON Value where
+    toJson   = id
+    fromJson = Right
