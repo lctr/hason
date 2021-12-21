@@ -17,50 +17,54 @@
 -----------------------------------------------------------------------------
 
 {-
-    *NOTE:* @Text.Read.Lex.readBinP@ is not exported from Text.Read.Lex. In order to mimic the functionality, we need @readIntP'@, which in turn requires @valDig@ and @valDecDig@. This is necessary since Data.Numeric begins at base 4.16, which is just above the version bounds for our current project. Rather than recompile GHC's @base@ module, we provide the source from existing base sub modules.
-
-
+    *NOTE:* @Text.Read.Lex.readBinP@ is not exported from Text.Read.Lex. 
+    In order to mimic the functionality, we need @readIntP'@, which in turn
+    requires @valDig@ and @valDecDig@. This is necessary since Data.Numeric 
+    begins at base 4.16, which is just above the version bounds for our 
+    current project. 
+    
+    Rather than recompile GHC's @base@ module, we provide the source from existing base sub modules.
 -}
 
 module Numeric
-    (
+  (
 
         -- * Showing
-      showSigned
-    , showIntAtBase
-    , showInt
-    , showBin
-    , showHex
-    , showOct
-    , showEFloat
-    , showFFloat
-    , showGFloat
-    , showFFloatAlt
-    , showGFloatAlt
-    , showFloat
-    , showHFloat
-    , floatToDigits
-    ,
+    showSigned
+  , showIntAtBase
+  , showInt
+  , showBin
+  , showHex
+  , showOct
+  , showEFloat
+  , showFFloat
+  , showGFloat
+  , showFFloatAlt
+  , showGFloatAlt
+  , showFloat
+  , showHFloat
+  , floatToDigits
+  ,
 
         -- * Reading
 
         -- | /NB:/ 'readInt' is the \'dual\' of 'showIntAtBase',
         -- and 'readDec' is the \`dual\' of 'showInt'.
         -- The inconsistent naming is a historical accident.
-      readSigned
-    , readInt
-    , readBin
-    , readDec
-    , readOct
-    , readHex
-    , readFloat
-    , lexDigits
-    ,
+    readSigned
+  , readInt
+  , readBin
+  , readDec
+  , readOct
+  , readHex
+  , readFloat
+  , lexDigits
+  ,
 
         -- * Miscellaneous
-      fromRat
-    , Floating(..)
-    ) where
+    fromRat
+  , Floating(..)
+  ) where
 
 import           Data.Maybe
 import           GHC.Base
@@ -83,11 +87,11 @@ import qualified Text.Read.Lex                 as L
 
 -- | Reads an /unsigned/ 'Integral' value in an arbitrary base.
 readInt
-    :: Num a
-    => a                  -- ^ the base
-    -> (Char -> Bool)     -- ^ a predicate distinguishing valid digits in this base
-    -> (Char -> Int)      -- ^ a function converting a valid digit character to an 'Int'
-    -> ReadS a
+  :: Num a
+  => a                  -- ^ the base
+  -> (Char -> Bool)     -- ^ a predicate distinguishing valid digits in this base
+  -> (Char -> Int)      -- ^ a function converting a valid digit character to an 'Int'
+  -> ReadS a
 readInt base isDigit valDigit = readP_to_S (L.readIntP base isDigit valDigit)
 
 -- ------------------------------------------------------------------------------
@@ -103,7 +107,8 @@ readBin = readP_to_S (readIntP' 2)
 {- 
     from https://hackage.haskell.org/package/base-4.14.0.0/docs/src/Text.Read.Lex.html 
 
-    Added in order to use @readIntP'@ (and hence read binary numbers), which is not exported from the above module.
+    Added in order to use @readIntP'@ (and hence read binary numbers), 
+    which is not exported from the module linked above.
 -}
 valDig :: (Eq a, Num a) => a -> Char -> Maybe Int
 valDig 2 c | '0' <= c && c <= '1' = Just (ord c - ord '0')
@@ -124,9 +129,9 @@ valDecDig c | '0' <= c && c <= '9' = Just (ord c - ord '0')
 
 readIntP' :: (Eq a, Num a) => a -> ReadP a
 readIntP' base = L.readIntP base isDigit valDigit
-  where
-    isDigit c = isJust (valDig base c)
-    valDigit c = fromMaybe 0 (valDig base c)
+ where
+  isDigit c = isJust (valDig base c)
+  valDigit c = fromMaybe 0 (valDig base c)
 {-# SPECIALISE readIntP' :: Integer -> ReadP Integer #-}
 
 readBinP :: ReadP Integer
@@ -163,10 +168,10 @@ readFloat = readP_to_S readFloatP
 
 readFloatP :: RealFrac a => ReadP a
 readFloatP = do
-    tok <- L.lex
-    case tok of
-        L.Number n -> return $ fromRational $ L.numberToRational n
-        _          -> pfail
+  tok <- L.lex
+  case tok of
+    L.Number n -> return $ fromRational $ L.numberToRational n
+    _          -> pfail
 
 -- It's turgid to have readSigned work using list comprehensions,
 -- but it's specified as a ReadS to ReadS transformer
@@ -175,18 +180,18 @@ readFloatP = do
 -- | Reads a /signed/ 'Real' value, given a reader for an unsigned value.
 readSigned :: (Real a) => ReadS a -> ReadS a
 readSigned readPos = readParen False read'
-  where
-    read' r =
-        read'' r
-            ++ (do
-                   ("-", s) <- lex r
-                   (x  , t) <- read'' s
-                   return (-x, t)
-               )
-    read'' r = do
-        (str, s ) <- lex r
-        (n  , "") <- readPos str
-        return (n, s)
+ where
+  read' r =
+    read'' r
+      ++ (do
+           ("-", s) <- lex r
+           (x  , t) <- read'' s
+           return (-x, t)
+         )
+  read'' r = do
+    (str, s ) <- lex r
+    (n  , "") <- readPos str
+    return (n, s)
 
 -- -----------------------------------------------------------------------------
 -- Showing
@@ -194,16 +199,16 @@ readSigned readPos = readParen False read'
 -- | Show /non-negative/ 'Integral' numbers in base 10.
 showInt :: Integral a => a -> ShowS
 showInt n0 cs0
-    | n0 < 0 = errorWithoutStackTrace
-        "Numeric.showInt: can't show negative numbers"
-    | otherwise = go n0 cs0
-  where
-    go n cs
-        | n < 10 = case unsafeChr (ord '0' + fromIntegral n) of
-            c@(C# _) -> c : cs
-        | otherwise = case unsafeChr (ord '0' + fromIntegral r) of
-            c@(C# _) -> go q (c : cs)
-        where (q, r) = n `quotRem` 10
+  | n0 < 0 = errorWithoutStackTrace
+    "Numeric.showInt: can't show negative numbers"
+  | otherwise = go n0 cs0
+ where
+  go n cs
+    | n < 10 = case unsafeChr (ord '0' + fromIntegral n) of
+      c@(C# _) -> c : cs
+    | otherwise = case unsafeChr (ord '0' + fromIntegral r) of
+      c@(C# _) -> go q (c : cs)
+    where (q, r) = n `quotRem` 10
 
 -- Controlling the format and precision of floats. The code that
 -- implements the formatting itself is in @PrelNum@ to avoid
@@ -282,35 +287,35 @@ similar to the @%a@ specifier in C's printf.
 -}
 showHFloat :: RealFloat a => a -> ShowS
 showHFloat = showString . fmt
-  where
-    fmt x | isNaN x                   = "NaN"
-          | isInfinite x = (if x < 0 then "-" else "") ++ "Infinity"
-          | x < 0 || isNegativeZero x = '-' : cvt (-x)
-          | otherwise                 = cvt x
+ where
+  fmt x | isNaN x                   = "NaN"
+        | isInfinite x              = (if x < 0 then "-" else "") ++ "Infinity"
+        | x < 0 || isNegativeZero x = '-' : cvt (-x)
+        | otherwise                 = cvt x
 
-    cvt x
-        | x == 0 = "0x0p+0"
-        | otherwise = case floatToDigits 2 x of
-            r@([], _) -> error $ "Impossible happened: showHFloat: " ++ show r
-            (d : ds, e) -> "0x" ++ show d ++ frac ds ++ "p" ++ show (e - 1)
+  cvt x
+    | x == 0 = "0x0p+0"
+    | otherwise = case floatToDigits 2 x of
+      r@([]    , _) -> error $ "Impossible happened: showHFloat: " ++ show r
+      (  d : ds, e) -> "0x" ++ show d ++ frac ds ++ "p" ++ show (e - 1)
 
-    -- Given binary digits, convert them to hex in blocks of 4
-    -- Special case: If all 0's, just drop it.
-    frac digits | allZ digits = ""
-                | otherwise   = "." ++ hex digits
-      where
-        hex ds = case ds of
-            []                -> ""
-            [a]               -> hexDigit a 0 0 0 ""
-            [a, b]            -> hexDigit a b 0 0 ""
-            [a, b, c]         -> hexDigit a b c 0 ""
-            a : b : c : d : r -> hexDigit a b c d (hex r)
+  -- Given binary digits, convert them to hex in blocks of 4
+  -- Special case: If all 0's, just drop it.
+  frac digits | allZ digits = ""
+              | otherwise   = "." ++ hex digits
+   where
+    hex ds = case ds of
+      []                -> ""
+      [a]               -> hexDigit a 0 0 0 ""
+      [a, b]            -> hexDigit a b 0 0 ""
+      [a, b, c]         -> hexDigit a b c 0 ""
+      a : b : c : d : r -> hexDigit a b c d (hex r)
 
-    hexDigit a b c d = showHex (8 * a + 4 * b + 2 * c + d)
+  hexDigit a b c d = showHex (8 * a + 4 * b + 2 * c + d)
 
-    allZ xs = case xs of
-        x : more -> x == 0 && allZ more
-        []       -> True
+  allZ xs = case xs of
+    x : more -> x == 0 && allZ more
+    []       -> True
 
 -- ---------------------------------------------------------------------------
 -- Integer printing functions
@@ -319,19 +324,19 @@ showHFloat = showString . fmt
 -- first argument, and the character representation specified by the second.
 showIntAtBase :: (Integral a, Show a) => a -> (Int -> Char) -> a -> ShowS
 showIntAtBase base toChr n0 r0
-    | base <= 1 = errorWithoutStackTrace
-        ("Numeric.showIntAtBase: applied to unsupported base " ++ show base)
-    | n0 < 0 = errorWithoutStackTrace
-        ("Numeric.showIntAtBase: applied to negative number " ++ show n0)
-    | otherwise = showIt (quotRem n0 base) r0
-  where
-    showIt (n, d) r = seq c $ -- stricter than necessary
-                              case n of
-        0 -> r'
-        _ -> showIt (quotRem n base) r'
-      where
-        c  = toChr (fromIntegral d)
-        r' = c : r
+  | base <= 1 = errorWithoutStackTrace
+    ("Numeric.showIntAtBase: applied to unsupported base " ++ show base)
+  | n0 < 0 = errorWithoutStackTrace
+    ("Numeric.showIntAtBase: applied to negative number " ++ show n0)
+  | otherwise = showIt (quotRem n0 base) r0
+ where
+  showIt (n, d) r = seq c $ -- stricter than necessary
+                            case n of
+    0 -> r'
+    _ -> showIt (quotRem n base) r'
+   where
+    c  = toChr (fromIntegral d)
+    r' = c : r
 
 -- | Show /non-negative/ 'Integral' numbers in base 16.
 showHex :: (Integral a, Show a) => a -> ShowS
