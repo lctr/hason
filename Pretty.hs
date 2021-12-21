@@ -5,6 +5,7 @@ import           Data.Char
 
 import           Data.Bits
 import           Numeric
+import           Util
 
 data Doc =
     Empty
@@ -48,15 +49,14 @@ punctuate p = \case
 
 -- DEALING WITH CHARACTERS AND ESCAPES
 character :: Char -> Doc
-character c = case lookup c escaped of
+character c = case lookup c escapes of
     Just r -> text r
     Nothing | mustEscape c -> hexEscape c
             | otherwise    -> char c
-    where mustEscape c = c < ' ' || c == '\x7f' || c > '\xff'
 
-escaped :: [(Char, String)]
-escaped = zipWith ch "\b\n\f\r\t\\\"/" "bnfrt\\\"/"
-    where ch a b = (a, ['\\', b])
+--
+-- Escapes moved to Util.hs
+--
 
 -- | Represent Unicode characters up to 0xffffff
 smallHex :: Int -> Doc
