@@ -60,7 +60,7 @@ render = \case
         where field (k, v) = string k <> text ": " <> render v
 
 instance Show Value where
-    show = show . render
+    show x = pretty 80 (render x)
 
 putValue :: Value -> IO ()
 putValue = print
