@@ -47,16 +47,12 @@ punctuate p = \case
     [d     ] -> [d]
     (d : ds) -> (d <> p) : punctuate p ds
 
--- DEALING WITH CHARACTERS AND ESCAPES
-character :: Char -> Doc
-character c = case lookup c escapes of
-    Just r -> text r
-    Nothing | mustEscape c -> hexEscape c
-            | otherwise    -> char c
-
 --
 -- Escapes moved to Util.hs
 --
+
+character :: Char -> Doc
+character c = escaped c text hexEscape char
 
 -- | Represent Unicode characters up to 0xffffff
 smallHex :: Int -> Doc
