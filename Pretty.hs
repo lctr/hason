@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Pretty where
 
 import           Data.Char
@@ -30,6 +31,22 @@ surround left right x = char left <> x <> char right
 -- | Concatenates multiple 'Doc' values, i.e., 'concat' for lists
 hcat :: [Doc] -> Doc
 hcat xs = undefined
+
+-- | Prettify a delimited structure surrounded by a prefix and suffix, e.g.,  arrays and objects
+delimited :: Char -> Char -> (a -> Doc) -> [a] -> Doc
+delimited left right item =
+    surround left right . fsep . punctuate (char ',') . map item
+
+-- | Combine a list of Doc values into one, wrapping lines if necessary
+fsep :: [Doc] -> Doc
+fsep xs = undefined
+
+-- | Given a list of Doc values, if there is more than 1 element, separate with given punctuator Doc value, e.g., a:b:[] -> a, b
+punctuate :: Doc -> [Doc] -> [Doc]
+punctuate p = \case
+    []       -> []
+    [d     ] -> [d]
+    (d : ds) -> (d <> p) : punctuate p ds
 
 -- DEALING WITH CHARACTERS AND ESCAPES
 character :: Char -> Doc
